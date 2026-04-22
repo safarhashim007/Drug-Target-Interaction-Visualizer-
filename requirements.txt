@@ -1,0 +1,6 @@
+streamlit
+rdkit
+py3Dmol
+stmol
+Pillow
+ipython_genutils

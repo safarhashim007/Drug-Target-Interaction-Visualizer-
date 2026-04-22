@@ -1,0 +1,19 @@
+# Environments
+venv/
+env/
+.env
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Mac OS X
+.DS_Store
+
+# Streamlit
+.streamlit/
+
+# IDEs
+.vscode/
+.idea/
