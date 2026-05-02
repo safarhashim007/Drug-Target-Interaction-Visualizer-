@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     libxrender1 \
     libxext6 \
+    libsm6 \
+    libx11-6 \
+    libexpat1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file into the container
@@ -24,4 +27,4 @@ COPY . .
 EXPOSE 8501
 
 # Run the application
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD sh -c "streamlit run app.py --server.port=${PORT:-8501} --server.address=0.0.0.0"
