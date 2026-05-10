@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drug-Target Interaction Visualizer</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://3Dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --accent: #1D9E75;
+  --accent2: #0F6E56;
+  --accent-light: #E1F5EE;
+  --hot: #D85A30;
+  --hot-light: #FAECE7;
+  --purple: #7F77DD;
+  --purple-light: #EEEDFE;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f3;
+  --text-primary: #1a1a18;
+  --text-secondary: #6b6b67;
+  --text-tertiary: #9c9a92;
+  --border: rgba(0,0,0,0.12);
+  --border-med: rgba(0,0,0,0.22);
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #1e1e1c;
+    --bg-secondary: #2a2a28;
+    --text-primary: #e8e6de;
+    --text-secondary: #9c9a92;
+    --text-tertiary: #6b6b67;
+    --border: rgba(255,255,255,0.1);
+    --border-med: rgba(255,255,255,0.2);
+    --accent-light: #04342C;
+    --hot-light: #4A1B0C;
+    --purple-light: #26215C;
+  }
+}
+body {
+  background: var(--bg-secondary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  color: var(--text-primary);
+}
+.container {
+  max-width: 780px;
+  margin: 0 auto;
+}
+.app-shell {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.header-bar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 0.5px solid var(--border);
+  margin-bottom: 4px;
+}
+.dna-icon { font-size: 26px; }
+.header-text h1 {
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.header-text p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.badge {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--accent-light);
+  color: var(--accent2);
+  font-weight: 500;
+  border: 0.5px solid #9FE1CB;
+}
+.input-panel {
+  grid-column: 1 / -1;
+  background: var(--bg-primary);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+}
+.input-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.smiles-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.smiles-input {
+  flex: 1;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  padding: 9px 12px;
+  border: 0.5px solid var(--border-med);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.smiles-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+.analyze-btn {
+  padding: 9px 18px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.analyze-btn:hover { background: var(--accent2); }
+.analyze-btn:active { transform: scale(0.97); }
+.presets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  align-items: center;
+}
+.presets-label { font-size: 11px; color: var(--text-secondary); }
+.preset-chip {
+  font-size: 11px;
+  padding: 4px 11px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border-med);
+  color: var(--text-secondary);
+  cursor: pointer;
+  background: transparent;
+  transition: background 0.1s, color 0.1s;
+}
+.preset-chip:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+.viz-panel {
+  background: var(--bg-primary);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 0.5px solid var(--border);
+}
+.panel-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.panel-sub { font-size: 11px; color: var(--text-secondary); }
+.panel-body { padding: 12px 14px; }
+#mol-canvas-2d {
+  width: 100%;
+  height: 200px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+#mol-canvas-3d {
+  width: 100%;
+  height: 200px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#mol2d-svg { width: 100%; height: 100%; }
+.props-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+@media (max-width: 520px) {
+  .props-grid { grid-template-columns: repeat(2, 1fr); }
+  .app-shell { grid-template-columns: 1fr; }
+  .viz-panel, .interaction-panel { grid-column: 1 / -1; }
+}
+.prop-card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 11px 13px;
+}
+.prop-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.prop-value { font-size: 20px; font-weight: 500; color: var(--text-primary); }
+.prop-unit { font-size: 10px; color: var(--text-secondary); }
+.prop-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  margin-top: 8px;
+  overflow: hidden;
+}
+.prop-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  width: 0%;
+}
+.lipinski-panel {
+  grid-column: 1 / -1;
+  background: var(--bg-primary);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.lipinski-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+}
+.lip-rule {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding: 4px 11px;
+  border-radius: 20px;
+  background: var(--bg-secondary);
+  border: 0.5px solid var(--border);
+  color: var(--text-secondary);
+}
+.lip-rule.pass {
+  background: var(--accent-light);
+  color: var(--accent2);
+  border-color: #9FE1CB;
+}
+.lip-rule.fail {
+  background: var(--hot-light);
+  color: var(--hot);
+  border-color: #F5C4B3;
+}
+.interaction-panel {
+  grid-column: 1 / -1;
+  background: var(--bg-primary);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.target-list { display: flex; flex-direction: column; }
+.target-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  border-bottom: 0.5px solid var(--border);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.target-row:last-child { border-bottom: none; }
+.target-row:hover { background: var(--bg-secondary); }
+.target-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.target-name { font-size: 13px; color: var(--text-primary); }
+.target-class { font-size: 11px; color: var(--text-secondary); }
+.target-info { flex: 1; }
+.affinity-wrap { width: 110px; }
+.affinity-label { font-size: 10px; color: var(--text-secondary); margin-bottom: 3px; }
+.affinity-bar-bg {
+  height: 6px;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 0.5px solid var(--border);
+}
+.affinity-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+.affinity-score {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  width: 34px;
+  text-align: right;
+}
+.confidence-badge {
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.conf-high { background: var(--accent-light); color: var(--accent2); border: 0.5px solid #9FE1CB; }
+.conf-med  { background: #FAEEDA; color: #854F0B; border: 0.5px solid #FAC775; }
+.conf-low  { background: var(--hot-light); color: #993C1D; border: 0.5px solid #F5C4B3; }
+.status-bar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: var(--text-secondary);
+  border: 0.5px solid var(--border);
+}
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+.status-dot.loading { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="app-shell">
+
+    <div class="header-bar">
+      <span class="dna-icon">🧬</span>
+      <div class="header-text">
+        <h1>Drug-Target Interaction Visualizer</h1>
+        <p>Molecular structure analysis &amp; binding prediction</p>
+      </div>
+      <span class="badge">v2.1</span>
+    </div>
+
+    <div class="input-panel">
+      <div class="input-label">
+        <i class="ti ti-atom" style="font-size:14px;color:var(--accent)"></i>
+        SMILES string
+      </div>
+      <div class="smiles-row">
+        <input class="smiles-input" id="smiles-in" type="text"
+          placeholder="e.g. CC(=O)Nc1ccc(O)cc1"
+          value="CC(=O)Nc1ccc(O)cc1">
+        <button class="analyze-btn" onclick="analyze()">
+          <i class="ti ti-flask"></i> Analyze
+        </button>
+      </div>
+      <div class="presets">
+        <span class="presets-label">Presets:</span>
+        <button class="preset-chip" onclick="setPreset('CC(=O)Nc1ccc(O)cc1')">Paracetamol</button>
+        <button class="preset-chip" onclick="setPreset('CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C')">Testosterone</button>
+        <button class="preset-chip" onclick="setPreset('CN1CCC[C@H]1c2cccnc2')">Nicotine</button>
+        <button class="preset-chip" onclick="setPreset('OC(=O)c1ccccc1OC(C)=O')">Aspirin</button>
+        <button class="preset-chip" onclick="setPreset('c1ccc2[nH]ccc2c1')">Indole</button>
+      </div>
+    </div>
+
+    <div class="viz-panel">
+      <div class="panel-head">
+        <span class="panel-title">
+          <i class="ti ti-topology-star" style="font-size:15px;color:var(--purple)"></i>
+          2D Structure
+        </span>
+        <span class="panel-sub" id="mol-name-2d">—</span>
+      </div>
+      <div class="panel-body">
+        <div id="mol-canvas-2d">
+          <svg id="mol2d-svg" viewBox="0 0 320 190" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="viz-panel">
+      <div class="panel-head">
+        <span class="panel-title">
+          <i class="ti ti-rotate-3d" style="font-size:15px;color:var(--accent)"></i>
+          3D Conformation
+        </span>
+        <span class="panel-sub" id="mol-name-3d">—</span>
+      </div>
+      <div class="panel-body">
+        <div id="mol-canvas-3d">
+          <canvas id="mol3d-canvas" width="340" height="190" style="border-radius:6px;width:100%;height:100%"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="props-grid">
+      <div class="prop-card">
+        <div class="prop-label">Mol. Weight</div>
+        <div><span class="prop-value" id="prop-mw">—</span> <span class="prop-unit">Da</span></div>
+        <div class="prop-bar"><div class="prop-bar-fill" id="bar-mw" style="background:#1D9E75"></div></div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">logP</div>
+        <div><span class="prop-value" id="prop-logp">—</span></div>
+        <div class="prop-bar"><div class="prop-bar-fill" id="bar-logp" style="background:#7F77DD"></div></div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">H-Bond Donors</div>
+        <div><span class="prop-value" id="prop-hbd">—</span></div>
+        <div class="prop-bar"><div class="prop-bar-fill" id="bar-hbd" style="background:#D85A30"></div></div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">H-Bond Acceptors</div>
+        <div><span class="prop-value" id="prop-hba">—</span></div>
+        <div class="prop-bar"><div class="prop-bar-fill" id="bar-hba" style="background:#378ADD"></div></div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">TPSA</div>
+        <div><span class="prop-value" id="prop-tpsa">—</span> <span class="prop-unit">Å²</span></div>
+        <div class="prop-bar"><div class="prop-bar-fill" id="bar-tpsa" style="background:#BA7517"></div></div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">Rotatable Bonds</div>
+        <div><span class="prop-value" id="prop-rot">—</span></div>
+        <div class="prop-bar"><div class="prop-bar-fill" id="bar-rot" style="background:#3B6D11"></div></div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">QED Score</div>
+        <div><span class="prop-value" id="prop-qed">—</span></div>
+        <div class="prop-bar"><div class="prop-bar-fill" id="bar-qed" style="background:#854F0B"></div></div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">Ring Count</div>
+        <div><span class="prop-value" id="prop-rings">—</span></div>
+        <div class="prop-bar"><div class="prop-bar-fill" id="bar-rings" style="background:#1D9E75"></div></div>
+      </div>
+    </div>
+
+    <div class="lipinski-panel">
+      <div class="panel-head">
+        <span class="panel-title">
+          <i class="ti ti-dna" style="font-size:15px;color:var(--hot)"></i>
+          Drug-likeness Rules
+        </span>
+        <span id="ro5-status" class="panel-sub">—</span>
+      </div>
+      <div class="lipinski-row" id="lip-rules"></div>
+    </div>
+
+    <div class="interaction-panel">
+      <div class="panel-head">
+        <span class="panel-title">
+          <i class="ti ti-target" style="font-size:15px;color:var(--hot)"></i>
+          Predicted Target Interactions
+        </span>
+        <span class="panel-sub" id="targets-sub">—</span>
+      </div>
+      <div class="target-list" id="target-list"></div>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Ready — enter a SMILES string above</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const PRESETS = {
+  'CC(=O)Nc1ccc(O)cc1': {
+    name: 'Paracetamol (Acetaminophen)', mw: 151.16, logp: 0.49, hbd: 2, hba: 2,
+    targets: [
+      { name: 'COX-1/COX-2', cls: 'Cyclooxygenase', aff: 0.72, conf: 'high', col: '#1D9E75' },
+      { name: 'TRPA1 Channel', cls: 'Ion channel', aff: 0.58, conf: 'med', col: '#7F77DD' },
+      { name: 'CB1 Receptor', cls: 'GPCR', aff: 0.41, conf: 'med', col: '#378ADD' },
+      { name: 'NF-κB Pathway', cls: 'Transcription factor', aff: 0.29, conf: 'low', col: '#D85A30' },
+    ]
+  },
+  'CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C': {
+    name: 'Testosterone', mw: 288.42, logp: 3.32, hbd: 1, hba: 2,
+    targets: [
+      { name: 'Androgen Receptor', cls: 'Nuclear receptor', aff: 0.95, conf: 'high', col: '#1D9E75' },
+      { name: 'SHBG', cls: 'Binding protein', aff: 0.63, conf: 'high', col: '#7F77DD' },
+      { name: 'Aromatase CYP19A1', cls: 'Cytochrome P450', aff: 0.44, conf: 'med', col: '#378ADD' },
+      { name: 'Estrogen Receptor β', cls: 'Nuclear receptor', aff: 0.31, conf: 'low', col: '#D85A30' },
+    ]
+  },
+  'CN1CCC[C@H]1c2cccnc2': {
+    name: 'Nicotine', mw: 162.23, logp: 1.17, hbd: 0, hba: 2,
+    targets: [
+      { name: 'nAChR α4β2', cls: 'Ion channel', aff: 0.91, conf: 'high', col: '#1D9E75' },
+      { name: 'nAChR α7', cls: 'Ion channel', aff: 0.76, conf: 'high', col: '#7F77DD' },
+      { name: 'Dopamine transporter', cls: 'Transporter', aff: 0.52, conf: 'med', col: '#378ADD' },
+      { name: 'CYP2A6', cls: 'Cytochrome P450', aff: 0.38, conf: 'low', col: '#D85A30' },
+    ]
+  },
+  'OC(=O)c1ccccc1OC(C)=O': {
+    name: 'Aspirin (ASA)', mw: 180.16, logp: 1.19, hbd: 1, hba: 3,
+    targets: [
+      { name: 'COX-1 (Irreversible)', cls: 'Cyclooxygenase', aff: 0.88, conf: 'high', col: '#1D9E75' },
+      { name: 'COX-2 (Irreversible)', cls: 'Cyclooxygenase', aff: 0.79, conf: 'high', col: '#7F77DD' },
+      { name: 'Platelet TXA2', cls: 'Thromboxane', aff: 0.61, conf: 'med', col: '#378ADD' },
+      { name: 'NF-κB Pathway', cls: 'Transcription factor', aff: 0.35, conf: 'low', col: '#D85A30' },
+    ]
+  },
+  'c1ccc2[nH]ccc2c1': {
+    name: 'Indole', mw: 117.15, logp: 2.14, hbd: 1, hba: 1,
+    targets: [
+      { name: '5-HT2A Receptor', cls: 'GPCR', aff: 0.55, conf: 'med', col: '#1D9E75' },
+      { name: 'AhR', cls: 'Nuclear receptor', aff: 0.49, conf: 'med', col: '#7F77DD' },
+      { name: 'IDO1 Enzyme', cls: 'Oxidoreductase', aff: 0.37, conf: 'low', col: '#378ADD' },
+    ]
+  },
+};
+
+let animFrame = null;
+
+function setPreset(smiles) {
+  document.getElementById('smiles-in').value = smiles;
+  analyze();
+}
+
+async function analyze() {
+  const smiles = document.getElementById('smiles-in').value.trim();
+  if (!smiles) return;
+  
+  setStatus('loading', 'Analyzing molecule...');
+  
+  try {
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ smiles })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Analysis failed');
+    }
+    
+    const data = await response.json();
+    
+    const preset = PRESETS[smiles];
+    if (preset) {
+        data.name = preset.name;
+    }
+    
+    render(data, smiles);
+  } catch (err) {
+    setStatus('error', err.message);
+    document.getElementById('status-dot').classList.remove('loading');
+  }
+}
+
+function generateFallback(smiles) {
+  const seed = smiles.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const rand = (n) => ((seed * n * 7919) % 100) / 100;
+  const mw = 80 + Math.round(smiles.length * 8.5 + rand(13) * 200);
+  const logp = parseFloat((-1 + rand(17) * 7).toFixed(2));
+  const hbd = Math.round(rand(19) * 5);
+  const hba = Math.round(rand(23) * 10);
+  return {
+    name: 'Custom molecule', mw, logp, hbd, hba,
+    targets: [
+      { name: 'Predicted Target A', cls: 'Enzyme', aff: 0.4 + rand(31) * 0.5, conf: 'med', col: '#1D9E75' },
+      { name: 'Predicted Target B', cls: 'GPCR', aff: 0.3 + rand(37) * 0.4, conf: 'low', col: '#7F77DD' },
+      { name: 'Predicted Target C', cls: 'Ion channel', aff: 0.2 + rand(41) * 0.3, conf: 'low', col: '#378ADD' },
+    ]
+  };
+}
+
+function render(data, smiles) {
+  document.getElementById('mol-name-2d').textContent = data.name;
+  document.getElementById('mol-name-3d').textContent = 'Interactive 3D';
+  document.getElementById('prop-mw').textContent = data.mw;
+  document.getElementById('prop-logp').textContent = data.logp;
+  document.getElementById('prop-hbd').textContent = data.hbd;
+  document.getElementById('prop-hba').textContent = data.hba;
+  document.getElementById('prop-tpsa').textContent = data.tpsa || '—';
+  document.getElementById('prop-rot').textContent = data.rot_bonds || '0';
+  document.getElementById('prop-qed').textContent = data.qed || '—';
+  document.getElementById('prop-rings').textContent = data.rings || '0';
+  setTimeout(() => {
+    document.getElementById('bar-mw').style.width = Math.min(100, data.mw / 5) + '%';
+    document.getElementById('bar-logp').style.width = Math.min(100, (data.logp + 2) / 9 * 100) + '%';
+    document.getElementById('bar-hbd').style.width = Math.min(100, data.hbd / 5 * 100) + '%';
+    document.getElementById('bar-hba').style.width = Math.min(100, data.hba / 10 * 100) + '%';
+    if(data.tpsa !== undefined) document.getElementById('bar-tpsa').style.width = Math.min(100, data.tpsa / 140 * 100) + '%';
+    if(data.rot_bonds !== undefined) document.getElementById('bar-rot').style.width = Math.min(100, data.rot_bonds / 10 * 100) + '%';
+    if(data.qed !== undefined) document.getElementById('bar-qed').style.width = Math.min(100, data.qed * 100) + '%';
+    if(data.rings !== undefined) document.getElementById('bar-rings').style.width = Math.min(100, data.rings / 5 * 100) + '%';
+  }, 50);
+  renderLipinski(data);
+  renderTargets(data);
+  render2D(smiles, data);
+  render3D(data);
+  setStatus('ready', 'Analysis complete — ' + data.targets.length + ' interactions predicted for ' + data.name);
+}
+
+function renderLipinski(data) {
+  const rules = [
+    { label: 'MW ≤ 500', pass: data.mw <= 500 },
+    { label: 'logP ≤ 5', pass: data.logp <= 5 },
+    { label: 'HBD ≤ 5', pass: data.hbd <= 5 },
+    { label: 'HBA ≤ 10', pass: data.hba <= 10 },
+  ];
+  if (data.tpsa !== undefined) rules.push({ label: 'TPSA ≤ 140', pass: data.tpsa <= 140 });
+  if (data.rot_bonds !== undefined) rules.push({ label: 'Rot. Bonds ≤ 10', pass: data.rot_bonds <= 10 });
+  
+  const passCount = rules.filter(r => r.pass).length;
+  document.getElementById('ro5-status').textContent = passCount + '/' + rules.length + ' rules passed';
+  document.getElementById('lip-rules').innerHTML = rules.map(r =>
+    '<span class="lip-rule ' + (r.pass ? 'pass' : 'fail') + '">' +
+    '<i class="ti ti-' + (r.pass ? 'check' : 'x') + '" style="font-size:12px"></i> ' +
+    r.label + '</span>'
+  ).join('');
+}
+
+function renderTargets(data) {
+  document.getElementById('targets-sub').textContent = data.targets.length + ' targets found';
+  document.getElementById('target-list').innerHTML = data.targets.map(t => {
+    const confClass = t.conf === 'high' ? 'conf-high' : t.conf === 'med' ? 'conf-med' : 'conf-low';
+    const confLabel = t.conf === 'high' ? 'High' : t.conf === 'med' ? 'Medium' : 'Low';
+    return '<div class="target-row">' +
+      '<div class="target-dot" style="background:' + t.col + '"></div>' +
+      '<div class="target-info">' +
+        '<div class="target-name">' + t.name + '</div>' +
+        '<div class="target-class">' + t.cls + '</div>' +
+      '</div>' +
+      '<div class="affinity-wrap">' +
+        '<div class="affinity-label">Affinity</div>' +
+        '<div class="affinity-bar-bg">' +
+          '<div class="affinity-fill" style="width:' + Math.round(t.aff * 100) + '%;background:' + t.col + '"></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="affinity-score">' + Math.round(t.aff * 100) + '%</div>' +
+      '<span class="confidence-badge ' + confClass + '">' + confLabel + '</span>' +
+      '</div>';
+  }).join('');
+}
+
+function render2D(smiles, data) {
+  if (data && data.svg2d) {
+    document.getElementById('mol-canvas-2d').innerHTML = data.svg2d;
+    const injectedSvg = document.getElementById('mol-canvas-2d').querySelector('svg');
+    if (injectedSvg) {
+        injectedSvg.style.width = '100%';
+        injectedSvg.style.height = '100%';
+    }
+    return;
+  }
+  
+  document.getElementById('mol-canvas-2d').innerHTML = '<svg id="mol2d-svg" viewBox="0 0 320 190" xmlns="http://www.w3.org/2000/svg"></svg>';
+  const svg = document.getElementById('mol2d-svg');
+  const W = 320, H = 190;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.innerHTML = '';
+  const atoms = parseSMILES2D(smiles, W, H);
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  svg.appendChild(defs);
+  atoms.bonds.forEach(b => {
+    const a1 = atoms.nodes[b[0]], a2 = atoms.nodes[b[1]];
+    if (!a1 || !a2) return;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', a1.x); line.setAttribute('y1', a1.y);
+    line.setAttribute('x2', a2.x); line.setAttribute('y2', a2.y);
+    line.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#888');
+    line.setAttribute('stroke-width', b[2] === 2 ? '2.5' : '1.8');
+    line.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(line);
+    if (b[2] === 2) {
+      const offset = 4;
+      const dx = a2.x - a1.x, dy = a2.y - a1.y;
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      const nx = -dy / len * offset, ny = dx / len * offset;
+      const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line2.setAttribute('x1', a1.x + nx); line2.setAttribute('y1', a1.y + ny);
+      line2.setAttribute('x2', a2.x + nx); line2.setAttribute('y2', a2.y + ny);
+      line2.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#888');
+      line2.setAttribute('stroke-width', '1.2');
+      line2.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(line2);
+    }
+  });
+  atoms.nodes.forEach(a => {
+    const col = a.sym === 'O' ? '#D85A30' : a.sym === 'N' ? '#378ADD' : a.sym === 'S' ? '#BA7517' : a.sym === 'F' ? '#1D9E75' : a.sym === 'Cl' ? '#3B6D11' : a.sym === 'Br' ? '#854F0B' : null;
+    if (col) {
+      const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      bg.setAttribute('cx', a.x); bg.setAttribute('cy', a.y);
+      bg.setAttribute('r', '11');
+      bg.setAttribute('fill', window.matchMedia('(prefers-color-scheme:dark)').matches ? '#2a2a28' : '#f5f5f3');
+      svg.appendChild(bg);
+      const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      txt.setAttribute('x', a.x); txt.setAttribute('y', a.y);
+      txt.setAttribute('text-anchor', 'middle');
+      txt.setAttribute('dominant-baseline', 'central');
+      txt.setAttribute('font-size', '11');
+      txt.setAttribute('font-weight', '600');
+      txt.setAttribute('fill', col);
+      txt.textContent = a.sym;
+      svg.appendChild(txt);
+    }
+  });
+  const formula = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  formula.setAttribute('x', '10'); formula.setAttribute('y', '180');
+  formula.setAttribute('font-size', '11');
+  formula.setAttribute('fill', window.matchMedia('(prefers-color-scheme:dark)').matches ? '#6b6b67' : '#9c9a92');
+  formula.textContent = smilesToFormula(smiles);
+  svg.appendChild(formula);
+}
+
+function parseSMILES2D(smiles, W, H) {
+  const nodes = [], bonds = [];
+  const atoms = smiles.match(/[A-Z][a-z]?|\[.*?\]/g) || [];
+  const n = Math.min(atoms.length, 22);
+  const cx = W / 2, cy = H / 2;
+  const hasRing = /c|n|o|s/.test(smiles) && (smiles.toLowerCase().match(/[cnos]/g) || []).length >= 5;
+  if (hasRing && n >= 6) {
+    const ringSize = Math.min(6, n);
+    const r = Math.min(cx, cy) * 0.48;
+    for (let i = 0; i < ringSize; i++) {
+      const angle = (i / ringSize) * 2 * Math.PI - Math.PI / 2;
+      nodes.push({ sym: (atoms[i] || 'C').replace(/[\[\]]/g, '').replace(/[^A-Za-z]/g, '').slice(0, 2) || 'C', x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
+    }
+    for (let i = 0; i < ringSize; i++) bonds.push([i, (i + 1) % ringSize, i % 2 === 0 ? 2 : 1]);
+    let x = cx + r + 32, y = cy;
+    for (let i = ringSize; i < n; i++) {
+      nodes.push({ sym: (atoms[i] || 'C').replace(/[\[\]]/g, '').replace(/[^A-Za-z]/g, '').slice(0, 2) || 'C', x, y });
+      bonds.push([i > ringSize ? i - 1 : 0, i, 1]);
+      x += 28; if (x > W - 20) { x = cx + r + 32; y += 28; }
+    }
+  } else {
+    let x = 36, y = cy, dir = 1;
+    for (let i = 0; i < n; i++) {
+      nodes.push({ sym: (atoms[i] || 'C').replace(/[\[\]]/g, '').replace(/[^A-Za-z]/g, '').slice(0, 2) || 'C', x, y: y + (i % 3 === 1 ? -20 : i % 3 === 2 ? 20 : 0) });
+      if (i > 0) bonds.push([i - 1, i, 1]);
+      x += 28 * dir;
+      if (x > W - 30 || x < 20) dir *= -1;
+    }
+  }
+  return { nodes, bonds };
+}
+
+function smilesToFormula(smiles) {
+  const counts = {};
+  const atoms = smiles.match(/[A-Z][a-z]?/g) || [];
+  atoms.forEach(a => { counts[a] = (counts[a] || 0) + 1; });
+  const order = ['C', 'H', 'N', 'O', 'S', 'P', 'F', 'Cl', 'Br'];
+  let formula = '';
+  order.forEach(a => { if (counts[a]) formula += a + (counts[a] > 1 ? counts[a] : ''); });
+  Object.keys(counts).forEach(a => { if (!order.includes(a) && counts[a]) formula += a + (counts[a] > 1 ? counts[a] : ''); });
+  return formula;
+}
+
+let viewer3D = null;
+function render3D(data) {
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  const container = document.getElementById('mol-canvas-3d');
+  container.innerHTML = '';
+  container.style.position = 'relative';
+  
+  if (!data || !data.mblock) {
+    container.innerHTML = '<div style="color:var(--text-secondary);font-size:12px;">No 3D model available</div>';
+    return;
+  }
+  
+  viewer3D = $3Dmol.createViewer(container, {
+    backgroundColor: window.matchMedia('(prefers-color-scheme:dark)').matches ? '#2a2a28' : '#f5f5f3'
+  });
+  
+  viewer3D.addModel(data.mblock, "sdf");
+  viewer3D.setStyle({}, {stick:{radius: 0.15}, sphere:{scale: 0.3}});
+  viewer3D.zoomTo();
+  viewer3D.render();
+  viewer3D.spin("y", 0.5);
+}
+
+function setStatus(state, msg) {
+  document.getElementById('status-dot').classList.toggle('loading', state === 'loading');
+  document.getElementById('status-text').textContent = msg;
+}
+
+window.addEventListener('load', () => analyze());
+</script>
+</body>
+</html>
