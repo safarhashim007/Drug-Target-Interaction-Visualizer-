@@ -1,0 +1,5 @@
+services:
+  - type: web
+    name: drug-target-visualizer
+    env: docker
+    plan: free
