@@ -273,6 +273,7 @@ body {
   font-weight: 500;
   line-height: 1.4;
   text-transform: none;
+  white-space: normal;
   letter-spacing: normal;
   pointer-events: none;
   transform: translateY(-5px);
@@ -1092,7 +1093,7 @@ function renderLipinski(data) {
         '<div class="rule-text">' +
           '<div class="rule-name">' + r.label +
             '<div class="info-icon" style="margin-left:4px"><i class="ti ti-info-circle"></i>' +
-              '<div class="info-tooltip" style="bottom:150%; left:50%; margin-left:-100px;">' +
+              '<div class="info-tooltip">' +
                 '<strong>Requirement</strong> ' + r.ideal + '<br>' +
                 '<strong>Why</strong> ' + r.desc +
               '</div>' +
@@ -1142,7 +1143,7 @@ function renderTargets(data) {
           '<div class="target-name-row">' +
             '<div class="target-name">' + t.name + '</div>' +
             (t.desc ? '<div class="info-icon" style="margin-left:4px;"><i class="ti ti-info-circle"></i>' +
-              '<div class="info-tooltip" style="bottom:150%; left:50%; margin-left:-100px; white-space:normal; width:220px;">' +
+              '<div class="info-tooltip">' +
                 '<strong>Interaction Target</strong> ' + t.desc +
               '</div>' +
             '</div>' : '') +
@@ -1156,7 +1157,7 @@ function renderTargets(data) {
           '<div style="display:flex; align-items:center; gap:4px;">' +
             '<span class="confidence-chip ' + confClass + '">' + confLabel + '</span>' +
             (t.conf_desc ? '<div class="info-icon"><i class="ti ti-info-circle"></i>' +
-              '<div class="info-tooltip" style="bottom:150%; right:0; left:auto; margin-left:0; white-space:normal; width:200px;">' +
+              '<div class="info-tooltip" style="right:0; left:auto; margin-left:0; width:200px;">' +
                 '<strong>Reasoning</strong> ' + t.conf_desc +
               '</div>' +
             '</div>' : '') +
