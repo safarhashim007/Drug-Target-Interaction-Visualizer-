@@ -235,6 +235,9 @@ body {
   padding: 11px 13px;
   position: relative;
 }
+.prop-card:hover {
+  z-index: 50;
+}
 .prop-label {
   font-size: 10px;
   text-transform: uppercase;
@@ -355,10 +358,12 @@ body {
   border-left: 5px solid transparent;
   background: var(--bg-secondary);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
 }
 .rule-row:hover {
   transform: translateX(4px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  z-index: 50;
 }
 .rule-row.pass { 
   border-left-color: var(--accent); 
@@ -479,6 +484,7 @@ body {
   transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(0,0,0,0.06);
   border-color: var(--accent);
+  z-index: 50;
 }
 .target-header {
   display: flex;
