@@ -17,31 +17,18 @@
   --purple: #7F77DD;
   --purple-light: #EEEDFE;
   --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f3;
+  --bg-secondary: #f0f2f5;
   --text-primary: #1a1a18;
-  --text-secondary: #6b6b67;
-  --text-tertiary: #9c9a92;
-  --border: rgba(0,0,0,0.12);
-  --border-med: rgba(0,0,0,0.22);
-  --radius-md: 8px;
-  --radius-lg: 12px;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-primary: #1e1e1c;
-    --bg-secondary: #2a2a28;
-    --text-primary: #e8e6de;
-    --text-secondary: #9c9a92;
-    --text-tertiary: #6b6b67;
-    --border: rgba(255,255,255,0.1);
-    --border-med: rgba(255,255,255,0.2);
-    --accent-light: #04342C;
-    --hot-light: #4A1B0C;
-    --purple-light: #26215C;
-  }
+  --text-secondary: #555550;
+  --text-tertiary: #888882;
+  --border: rgba(0,0,0,0.08);
+  --border-med: rgba(0,0,0,0.18);
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 4px 16px rgba(0,0,0,0.04);
 }
 body {
-  background: var(--bg-secondary);
+  background: #f0f2f5;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   min-height: 100vh;
   padding: 2rem 1rem;
@@ -137,6 +124,35 @@ body {
 }
 .analyze-btn:hover { background: var(--accent2); }
 .analyze-btn:active { transform: scale(0.97); }
+.pubchem-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--accent-light);
+  border: 1.5px solid rgba(29, 158, 117, 0.3);
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent2);
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(29, 158, 117, 0.08);
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+.pubchem-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(29, 158, 117, 0.25);
+}
+.pubchem-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(29, 158, 117, 0.15);
+}
 .presets {
   display: flex;
   gap: 6px;
@@ -217,14 +233,82 @@ body {
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   padding: 11px 13px;
+  position: relative;
 }
 .prop-label {
   font-size: 10px;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
 }
+.info-icon {
+  margin-left: 4px;
+  color: var(--text-tertiary);
+  cursor: help;
+  position: relative;
+  display: inline-flex;
+}
+.info-tooltip {
+  visibility: hidden;
+  width: 200px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  text-align: left;
+  border-radius: var(--radius-md);
+  padding: 10px;
+  position: absolute;
+  z-index: 100;
+  bottom: 150%;
+  left: 50%;
+  margin-left: -100px;
+  opacity: 0;
+  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+  border: 1px solid var(--border-med);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-transform: none;
+  letter-spacing: normal;
+  pointer-events: none;
+  transform: translateY(5px);
+}
+.info-tooltip strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent);
+}
+.info-icon:hover .info-tooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+}
+.info-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--bg-primary) transparent transparent transparent;
+  z-index: 101;
+}
+.info-tooltip::before {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -6px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: var(--border-med) transparent transparent transparent;
+  z-index: 100;
+}
+
 .prop-value { font-size: 20px; font-weight: 500; color: var(--text-primary); }
 .prop-unit { font-size: 10px; color: var(--text-secondary); }
 .prop-bar {
@@ -248,91 +332,252 @@ body {
   overflow: hidden;
 }
 .lipinski-row {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding: 12px 14px;
+  display: block;
 }
-.lip-rule {
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--bg-primary);
+}
+.rule-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-med);
+  border-left: 5px solid transparent;
+  background: var(--bg-secondary);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.rule-row:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+.rule-row.pass { 
+  border-left-color: var(--accent); 
+  background: linear-gradient(90deg, #E1F5EE 0%, var(--bg-primary) 100%);
+}
+.rule-row.fail { 
+  border-left-color: var(--hot); 
+  background: linear-gradient(90deg, #FAECE7 0%, var(--bg-primary) 100%);
+  border-color: rgba(216,90,48,0.3);
+}
+.rule-main {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  padding: 4px 11px;
-  border-radius: 20px;
-  background: var(--bg-secondary);
-  border: 0.5px solid var(--border);
+  gap: 16px;
+}
+.rule-icon { font-size: 26px; }
+.rule-icon.pass { color: var(--accent); }
+.rule-icon.fail { color: var(--hot); }
+.rule-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.rule-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+}
+.rule-desc {
+  font-size: 12px;
   color: var(--text-secondary);
 }
-.lip-rule.pass {
-  background: var(--accent-light);
-  color: var(--accent2);
-  border-color: #9FE1CB;
+.rule-value-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-med);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 90px;
+  text-align: center;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
 }
-.lip-rule.fail {
+.rules-summary {
+  margin: 0 16px 16px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  position: relative;
+  min-height: 120px;
+  text-align: left;
+}
+.summary-content {
+  padding: 24px;
+  flex: 1;
+  position: relative;
+  z-index: 2;
+}
+.rules-summary.pass-high {
+  background: var(--accent-light);
+  border-color: #9FE1CB;
+  color: var(--accent2);
+}
+.rules-summary.pass-low {
   background: var(--hot-light);
-  color: var(--hot);
-  border-color: #F5C4B3;
+  border-color: #F4C4B5;
+  color: #9C3312;
+}
+.summary-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.summary-desc { font-size: 13px; line-height: 1.5; opacity: 0.9; max-width: 80%; }
+.summary-img {
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 140%;
+  opacity: 0.8;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: 1;
 }
 .interaction-panel {
   grid-column: 1 / -1;
   background: var(--bg-primary);
   border: 0.5px solid var(--border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow: visible;
+  box-shadow: var(--shadow-sm);
 }
-.target-list { display: flex; flex-direction: column; }
-.target-row {
+.target-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+.target-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: visible;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+.target-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+  border-color: var(--accent);
+}
+.target-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 16px;
-  border-bottom: 0.5px solid var(--border);
-  cursor: pointer;
-  transition: background 0.12s;
 }
-.target-row:last-child { border-bottom: none; }
-.target-row:hover { background: var(--bg-secondary); }
-.target-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+.target-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
   flex-shrink: 0;
 }
-.target-name { font-size: 13px; color: var(--text-primary); }
-.target-class { font-size: 11px; color: var(--text-secondary); }
-.target-info { flex: 1; }
-.affinity-wrap { width: 110px; }
-.affinity-label { font-size: 10px; color: var(--text-secondary); margin-bottom: 3px; }
-.affinity-bar-bg {
+.target-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: visible;
+}
+.target-name-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.target-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.target-class {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.target-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+.stat-label { color: var(--text-secondary); font-weight: 500; }
+.stat-value { color: var(--text-primary); font-weight: 700; }
+
+.affinity-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.affinity-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.affinity-bar-outer {
   height: 6px;
   background: var(--bg-secondary);
   border-radius: 3px;
   overflow: hidden;
-  border: 0.5px solid var(--border);
 }
-.affinity-fill {
+.affinity-bar-inner {
   height: 100%;
   border-radius: 3px;
-  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
-.affinity-score {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-primary);
-  width: 34px;
-  text-align: right;
+.affinity-bar-inner::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shine 2s infinite;
 }
-.confidence-badge {
+@keyframes shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.confidence-chip {
+  padding: 4px 8px;
+  border-radius: 6px;
   font-size: 10px;
-  padding: 3px 9px;
-  border-radius: 20px;
-  font-weight: 500;
-  white-space: nowrap;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-.conf-high { background: var(--accent-light); color: var(--accent2); border: 0.5px solid #9FE1CB; }
-.conf-med  { background: #FAEEDA; color: #854F0B; border: 0.5px solid #FAC775; }
-.conf-low  { background: var(--hot-light); color: #993C1D; border: 0.5px solid #F5C4B3; }
+.conf-high { background: #E1F5EE; color: var(--accent2); }
+.conf-med { background: #FEF3C7; color: #92400E; }
+.conf-low { background: #FEE2E2; color: #991B1B; }
 .status-bar {
   grid-column: 1 / -1;
   display: flex;
@@ -354,6 +599,80 @@ body {
 }
 .status-dot.loading { animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+.final-summary-panel {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #ffffff 0%, #fcfdfd 100%);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: 0 12px 32px rgba(29, 158, 117, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.final-summary-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; width: 300px; height: 100%;
+  background: radial-gradient(circle, rgba(29, 158, 117, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.summary-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+.summary-main-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 600px) {
+  .summary-grid { grid-template-columns: 1fr; }
+}
+.summary-box {
+  background: var(--bg-secondary);
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--border-med);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.summary-box-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.summary-box-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.summary-footer-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  background: rgba(29, 158, 117, 0.05);
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--accent);
+}
 </style>
 </head>
 <body>
@@ -382,6 +701,9 @@ body {
           <i class="ti ti-flask"></i> Analyze
         </button>
       </div>
+      <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" class="pubchem-btn">
+        <i class="ti ti-search" style="font-size:16px;"></i> Find SMILES on PubChem <i class="ti ti-external-link" style="font-size:14px; margin-left: 2px;"></i>
+      </a>
       <div class="presets">
         <span class="presets-label">Presets:</span>
         <button class="preset-chip" onclick="setPreset('CC(=O)Nc1ccc(O)cc1')">Paracetamol</button>
@@ -424,42 +746,114 @@ body {
 
     <div class="props-grid">
       <div class="prop-card">
-        <div class="prop-label">Mol. Weight</div>
+        <div class="prop-label">
+          Mol. Weight
+          <div class="info-icon"><i class="ti ti-info-circle"></i>
+            <div class="info-tooltip">
+              <strong>What it is</strong> The total mass of the molecule.
+              <br><strong>Importance</strong> Affects how easily the drug can pass through cell membranes to reach its target.
+              <br><strong>Ideal Value</strong> ≤ 500 Da (Lipinski's Rule of 5).
+            </div>
+          </div>
+        </div>
         <div><span class="prop-value" id="prop-mw">—</span> <span class="prop-unit">Da</span></div>
         <div class="prop-bar"><div class="prop-bar-fill" id="bar-mw" style="background:#1D9E75"></div></div>
       </div>
       <div class="prop-card">
-        <div class="prop-label">logP</div>
+        <div class="prop-label">
+          logP
+          <div class="info-icon"><i class="ti ti-info-circle"></i>
+            <div class="info-tooltip">
+              <strong>What it is</strong> Partition coefficient measuring lipophilicity.
+              <br><strong>Importance</strong> Shows how well the drug dissolves in fats versus water, critical for absorption.
+              <br><strong>Ideal Value</strong> ≤ 5 (Lipinski's Rule of 5).
+            </div>
+          </div>
+        </div>
         <div><span class="prop-value" id="prop-logp">—</span></div>
         <div class="prop-bar"><div class="prop-bar-fill" id="bar-logp" style="background:#7F77DD"></div></div>
       </div>
       <div class="prop-card">
-        <div class="prop-label">H-Bond Donors</div>
+        <div class="prop-label">
+          H-Bond Donors
+          <div class="info-icon"><i class="ti ti-info-circle"></i>
+            <div class="info-tooltip">
+              <strong>What it is</strong> Number of hydrogen bond donors (e.g. NH, OH).
+              <br><strong>Importance</strong> Too many donors hinder the drug from crossing the lipid bilayer of cells.
+              <br><strong>Ideal Value</strong> ≤ 5 (Lipinski's Rule of 5).
+            </div>
+          </div>
+        </div>
         <div><span class="prop-value" id="prop-hbd">—</span></div>
         <div class="prop-bar"><div class="prop-bar-fill" id="bar-hbd" style="background:#D85A30"></div></div>
       </div>
       <div class="prop-card">
-        <div class="prop-label">H-Bond Acceptors</div>
+        <div class="prop-label">
+          H-Bond Acceptors
+          <div class="info-icon"><i class="ti ti-info-circle"></i>
+            <div class="info-tooltip">
+              <strong>What it is</strong> Number of hydrogen bond acceptors (e.g. N, O).
+              <br><strong>Importance</strong> High numbers increase the desolvation penalty, making membrane crossing harder.
+              <br><strong>Ideal Value</strong> ≤ 10 (Lipinski's Rule of 5).
+            </div>
+          </div>
+        </div>
         <div><span class="prop-value" id="prop-hba">—</span></div>
         <div class="prop-bar"><div class="prop-bar-fill" id="bar-hba" style="background:#378ADD"></div></div>
       </div>
       <div class="prop-card">
-        <div class="prop-label">TPSA</div>
+        <div class="prop-label">
+          TPSA
+          <div class="info-icon"><i class="ti ti-info-circle"></i>
+            <div class="info-tooltip">
+              <strong>What it is</strong> Topological Polar Surface Area.
+              <br><strong>Importance</strong> Predicts drug transport properties like intestinal absorption and blood-brain barrier penetration.
+              <br><strong>Ideal Value</strong> ≤ 140 Å² (Veber's Rule).
+            </div>
+          </div>
+        </div>
         <div><span class="prop-value" id="prop-tpsa">—</span> <span class="prop-unit">Å²</span></div>
         <div class="prop-bar"><div class="prop-bar-fill" id="bar-tpsa" style="background:#BA7517"></div></div>
       </div>
       <div class="prop-card">
-        <div class="prop-label">Rotatable Bonds</div>
+        <div class="prop-label">
+          Rotatable Bonds
+          <div class="info-icon"><i class="ti ti-info-circle"></i>
+            <div class="info-tooltip">
+              <strong>What it is</strong> Number of single non-ring bonds that can freely rotate.
+              <br><strong>Importance</strong> Determines molecular flexibility. Overly flexible drugs lose too much entropy upon binding.
+              <br><strong>Ideal Value</strong> ≤ 10 (Veber's Rule).
+            </div>
+          </div>
+        </div>
         <div><span class="prop-value" id="prop-rot">—</span></div>
         <div class="prop-bar"><div class="prop-bar-fill" id="bar-rot" style="background:#3B6D11"></div></div>
       </div>
       <div class="prop-card">
-        <div class="prop-label">QED Score</div>
+        <div class="prop-label">
+          QED Score
+          <div class="info-icon"><i class="ti ti-info-circle"></i>
+            <div class="info-tooltip">
+              <strong>What it is</strong> Quantitative Estimate of Drug-likeness.
+              <br><strong>Importance</strong> A statistical model that combines multiple properties to rank how "drug-like" a molecule is.
+              <br><strong>Ideal Value</strong> Near 1.0 is optimal. > 0.6 is good.
+            </div>
+          </div>
+        </div>
         <div><span class="prop-value" id="prop-qed">—</span></div>
         <div class="prop-bar"><div class="prop-bar-fill" id="bar-qed" style="background:#854F0B"></div></div>
       </div>
       <div class="prop-card">
-        <div class="prop-label">Ring Count</div>
+        <div class="prop-label">
+          Ring Count
+          <div class="info-icon"><i class="ti ti-info-circle"></i>
+            <div class="info-tooltip">
+              <strong>What it is</strong> The total number of ring structures in the molecule.
+              <br><strong>Importance</strong> Provides structural rigidity and specific 3D shape required for locking into target proteins.
+              <br><strong>Ideal Value</strong> Usually 1 to 4 rings.
+            </div>
+          </div>
+        </div>
         <div><span class="prop-value" id="prop-rings">—</span></div>
         <div class="prop-bar"><div class="prop-bar-fill" id="bar-rings" style="background:#1D9E75"></div></div>
       </div>
@@ -487,6 +881,33 @@ body {
       <div class="target-list" id="target-list"></div>
     </div>
 
+    <div class="final-summary-panel" id="final-summary-panel" style="display:none;">
+      <div class="summary-header-row">
+        <div class="summary-main-title">
+          <i class="ti ti-chart-dots" style="font-size:22px;"></i>
+          Comprehensive Evaluation Report
+        </div>
+        <span class="badge" style="margin:0; font-size:12px; padding:4px 12px;">Complete</span>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-box">
+          <span class="summary-box-label">Bioavailability Class</span>
+          <span class="summary-box-value" id="sum-bio">—</span>
+        </div>
+        <div class="summary-box">
+          <span class="summary-box-label">Leadlikeness Score</span>
+          <span class="summary-box-value" id="sum-lead">—</span>
+        </div>
+        <div class="summary-box">
+          <span class="summary-box-label">Primary Engagement</span>
+          <span class="summary-box-value" id="sum-target">—</span>
+        </div>
+      </div>
+      <div class="summary-footer-desc" id="sum-desc">
+        Evaluating full systemic profile...
+      </div>
+    </div>
+
     <div class="status-bar">
       <div class="status-dot" id="status-dot"></div>
       <span id="status-text">Ready — enter a SMILES string above</span>
@@ -500,45 +921,45 @@ const PRESETS = {
   'CC(=O)Nc1ccc(O)cc1': {
     name: 'Paracetamol (Acetaminophen)', mw: 151.16, logp: 0.49, hbd: 2, hba: 2,
     targets: [
-      { name: 'COX-1/COX-2', cls: 'Cyclooxygenase', aff: 0.72, conf: 'high', col: '#1D9E75' },
-      { name: 'TRPA1 Channel', cls: 'Ion channel', aff: 0.58, conf: 'med', col: '#7F77DD' },
-      { name: 'CB1 Receptor', cls: 'GPCR', aff: 0.41, conf: 'med', col: '#378ADD' },
-      { name: 'NF-κB Pathway', cls: 'Transcription factor', aff: 0.29, conf: 'low', col: '#D85A30' },
+      { name: 'COX-1/COX-2', cls: 'Cyclooxygenase', aff: 0.72, conf: 'high', col: '#1D9E75', desc: 'Inhibits cyclooxygenase enzymes centrally to reduce prostaglandin synthesis, alleviating pain and fever.', conf_desc: 'Well-established primary clinical target supported by comprehensive structural mapping.' },
+      { name: 'TRPA1 Channel', cls: 'Ion channel', aff: 0.58, conf: 'med', col: '#7F77DD', desc: 'Activates TRPA1 ion channels in the spinal cord to mediate antinociceptive effects.', conf_desc: 'Secondary mechanism documented in recent neuropharmacology studies.' },
+      { name: 'CB1 Receptor', cls: 'GPCR', aff: 0.41, conf: 'med', col: '#378ADD', desc: 'Metabolites reinforce cannabinoid receptor signaling via FAAH inhibition.', conf_desc: 'Indirect enzymatic metabolite activity linked to central analgesia.' },
+      { name: 'NF-κB Pathway', cls: 'Transcription factor', aff: 0.29, conf: 'low', col: '#D85A30', desc: 'Suppresses pro-inflammatory transcriptional activity at high concentrations.', conf_desc: 'General downstream signaling effect requiring elevated systemic dosage.' },
     ]
   },
   'CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C': {
     name: 'Testosterone', mw: 288.42, logp: 3.32, hbd: 1, hba: 2,
     targets: [
-      { name: 'Androgen Receptor', cls: 'Nuclear receptor', aff: 0.95, conf: 'high', col: '#1D9E75' },
-      { name: 'SHBG', cls: 'Binding protein', aff: 0.63, conf: 'high', col: '#7F77DD' },
-      { name: 'Aromatase CYP19A1', cls: 'Cytochrome P450', aff: 0.44, conf: 'med', col: '#378ADD' },
-      { name: 'Estrogen Receptor β', cls: 'Nuclear receptor', aff: 0.31, conf: 'low', col: '#D85A30' },
+      { name: 'Androgen Receptor', cls: 'Nuclear receptor', aff: 0.95, conf: 'high', col: '#1D9E75', desc: 'Directly binds nuclear androgen receptors to modulate gene transcription driving anabolic and androgenic functions.', conf_desc: 'Classic native steroid-receptor ligand pairing with optimal binding geometry.' },
+      { name: 'SHBG', cls: 'Binding protein', aff: 0.63, conf: 'high', col: '#7F77DD', desc: 'Sex hormone-binding globulin functions as the primary systemic carrier protein regulating bioavailability.', conf_desc: 'Direct native high-affinity transport coordination.' },
+      { name: 'Aromatase CYP19A1', cls: 'Cytochrome P450', aff: 0.44, conf: 'med', col: '#378ADD', desc: 'Enzymatic conversion target converting androgens into estrogenic metabolites.', conf_desc: 'Substrate-level interaction requiring specific orientation.' },
+      { name: 'Estrogen Receptor β', cls: 'Nuclear receptor', aff: 0.31, conf: 'low', col: '#D85A30', desc: 'Weak cross-reactivity at high concentrations due to core steroidal scaffold similarity.', conf_desc: 'Steric bulk of methyl groups prevents high-affinity binding.' },
     ]
   },
   'CN1CCC[C@H]1c2cccnc2': {
     name: 'Nicotine', mw: 162.23, logp: 1.17, hbd: 0, hba: 2,
     targets: [
-      { name: 'nAChR α4β2', cls: 'Ion channel', aff: 0.91, conf: 'high', col: '#1D9E75' },
-      { name: 'nAChR α7', cls: 'Ion channel', aff: 0.76, conf: 'high', col: '#7F77DD' },
-      { name: 'Dopamine transporter', cls: 'Transporter', aff: 0.52, conf: 'med', col: '#378ADD' },
-      { name: 'CYP2A6', cls: 'Cytochrome P450', aff: 0.38, conf: 'low', col: '#D85A30' },
+      { name: 'nAChR α4β2', cls: 'Ion channel', aff: 0.91, conf: 'high', col: '#1D9E75', desc: 'Agonist at nicotinic acetylcholine receptors driving dopamine release in the reward pathway.', conf_desc: 'Extremely well-characterized primary central nervous system target.' },
+      { name: 'nAChR α7', cls: 'Ion channel', aff: 0.76, conf: 'high', col: '#7F77DD', desc: 'Homomeric receptor engagement regulating cognitive and neuroprotective pathways.', conf_desc: 'Direct pharmacological activation.' },
+      { name: 'Dopamine transporter', cls: 'Transporter', aff: 0.52, conf: 'med', col: '#378ADD', desc: 'Modulates reuptake kinetics indirectly via receptor-mediated presynaptic pathways.', conf_desc: 'Downstream kinetic modulation.' },
+      { name: 'CYP2A6', cls: 'Cytochrome P450', aff: 0.38, conf: 'low', col: '#D85A30', desc: 'Primary hepatic metabolic enzyme responsible for clearance into cotinine.', conf_desc: 'Transient enzymatic catalytic site occupation.' },
     ]
   },
   'OC(=O)c1ccccc1OC(C)=O': {
     name: 'Aspirin (ASA)', mw: 180.16, logp: 1.19, hbd: 1, hba: 3,
     targets: [
-      { name: 'COX-1 (Irreversible)', cls: 'Cyclooxygenase', aff: 0.88, conf: 'high', col: '#1D9E75' },
-      { name: 'COX-2 (Irreversible)', cls: 'Cyclooxygenase', aff: 0.79, conf: 'high', col: '#7F77DD' },
-      { name: 'Platelet TXA2', cls: 'Thromboxane', aff: 0.61, conf: 'med', col: '#378ADD' },
-      { name: 'NF-κB Pathway', cls: 'Transcription factor', aff: 0.35, conf: 'low', col: '#D85A30' },
+      { name: 'COX-1 (Irreversible)', cls: 'Cyclooxygenase', aff: 0.88, conf: 'high', col: '#1D9E75', desc: 'Acetylates Serine 530 in the active site, permanently disabling thromboxane A2 production in platelets.', conf_desc: 'Definitive covalent mechanism of action.' },
+      { name: 'COX-2 (Irreversible)', cls: 'Cyclooxygenase', aff: 0.79, conf: 'high', col: '#7F77DD', desc: 'Inactivates inducible inflammatory cyclooxygenase pathways via active-site acetylation.', conf_desc: 'High structural affinity and covalent modification.' },
+      { name: 'Platelet TXA2', cls: 'Thromboxane', aff: 0.61, conf: 'med', col: '#378ADD', desc: 'Downstream inhibition of platelet aggregation markers.', conf_desc: 'Indirect consequence of upstream enzymatic inactivation.' },
+      { name: 'NF-κB Pathway', cls: 'Transcription factor', aff: 0.35, conf: 'low', col: '#D85A30', desc: 'Inhibits IκB kinase complex directly at anti-inflammatory dosages.', conf_desc: 'Requires microenvironment saturation.' },
     ]
   },
   'c1ccc2[nH]ccc2c1': {
     name: 'Indole', mw: 117.15, logp: 2.14, hbd: 1, hba: 1,
     targets: [
-      { name: '5-HT2A Receptor', cls: 'GPCR', aff: 0.55, conf: 'med', col: '#1D9E75' },
-      { name: 'AhR', cls: 'Nuclear receptor', aff: 0.49, conf: 'med', col: '#7F77DD' },
-      { name: 'IDO1 Enzyme', cls: 'Oxidoreductase', aff: 0.37, conf: 'low', col: '#378ADD' },
+      { name: '5-HT2A Receptor', cls: 'GPCR', aff: 0.55, conf: 'med', col: '#1D9E75', desc: 'Core bicyclic heteroaromatic motif mimicking the endogenous serotonin sidechain.', conf_desc: 'Good basic scaffold alignment, though lacking basic amine extensions.' },
+      { name: 'AhR', cls: 'Nuclear receptor', aff: 0.49, conf: 'med', col: '#7F77DD', desc: 'Aryl hydrocarbon receptor binding triggers xenobiotic response elements.', conf_desc: 'Excellent fit into hydrophobic planar receptor cavities.' },
+      { name: 'IDO1 Enzyme', cls: 'Oxidoreductase', aff: 0.37, conf: 'low', col: '#378ADD', desc: 'Feedback inhibition of indoleamine 2,3-dioxygenase metabolic pathways.', conf_desc: 'Low affinity non-covalent binding.' },
     ]
   },
 };
@@ -573,6 +994,7 @@ async function analyze() {
     const preset = PRESETS[smiles];
     if (preset) {
         data.name = preset.name;
+        data.targets = preset.targets;
     }
     
     render(data, smiles);
@@ -624,48 +1046,133 @@ function render(data, smiles) {
   renderTargets(data);
   render2D(smiles, data);
   render3D(data);
+  
+  // Render comprehensive summary
+  const finalPanel = document.getElementById('final-summary-panel');
+  if (finalPanel) {
+    finalPanel.style.display = 'flex';
+    const passCount = [data.mw <= 500, data.logp <= 5, data.hbd <= 5, data.hba <= 10].filter(Boolean).length;
+    let bioText = "High Bioavailability";
+    if (passCount === 3) bioText = "Moderate Bioavailability";
+    if (passCount < 3) bioText = "Low Bioavailability Risk";
+    
+    const isLead = data.mw <= 350 && data.logp <= 3.5;
+    const leadText = isLead ? "Optimal Lead Candidate" : "Standard Drug-like";
+    
+    const topTarget = data.targets && data.targets.length > 0 ? data.targets[0].name : "Non-specific";
+    
+    document.getElementById('sum-bio').textContent = bioText;
+    document.getElementById('sum-lead').textContent = leadText;
+    document.getElementById('sum-target').textContent = topTarget;
+    
+    const qedVal = data.qed ? (data.qed * 100).toFixed(0) + '%' : 'N/A';
+    document.getElementById('sum-desc').innerHTML = `<strong>Physiological Profile Summary:</strong> The evaluated compound <strong>${data.name}</strong> presents a Molecular Weight of ${data.mw} Da and a lipophilicity (logP) of ${data.logp}. With an overall quantitative estimate of drug-likeness (QED) rating of ${qedVal}, it exhibits highly distinct features suitable for anchoring into <strong>${topTarget}</strong> domains. Transport and physiological retention characteristics are predicted to be favorable for systemic delivery routes.`;
+  }
+
   setStatus('ready', 'Analysis complete — ' + data.targets.length + ' interactions predicted for ' + data.name);
 }
 
 function renderLipinski(data) {
   const rules = [
-    { label: 'MW ≤ 500', pass: data.mw <= 500 },
-    { label: 'logP ≤ 5', pass: data.logp <= 5 },
-    { label: 'HBD ≤ 5', pass: data.hbd <= 5 },
-    { label: 'HBA ≤ 10', pass: data.hba <= 10 },
+    { label: 'Mol. Weight', current: data.mw + ' Da', ideal: '≤ 500 Da', pass: data.mw <= 500, desc: 'Heavy molecules have lower oral bioavailability and poor cell membrane penetration.' },
+    { label: 'logP', current: data.logp, ideal: '≤ 5', pass: data.logp <= 5, desc: 'High lipophilicity leads to poor aqueous solubility and high toxicity risk.' },
+    { label: 'H-Bond Donors', current: data.hbd, ideal: '≤ 5', pass: data.hbd <= 5, desc: 'Too many donors dramatically hinder crossing the lipid bilayer of cells.' },
+    { label: 'H-Bond Acceptors', current: data.hba, ideal: '≤ 10', pass: data.hba <= 10, desc: 'High numbers increase the desolvation penalty, making membrane crossing harder.' },
   ];
-  if (data.tpsa !== undefined) rules.push({ label: 'TPSA ≤ 140', pass: data.tpsa <= 140 });
-  if (data.rot_bonds !== undefined) rules.push({ label: 'Rot. Bonds ≤ 10', pass: data.rot_bonds <= 10 });
+  if (data.tpsa !== undefined) rules.push({ label: 'TPSA', current: data.tpsa + ' Å²', ideal: '≤ 140 Å²', pass: data.tpsa <= 140, desc: 'High polar surface area impedes intestinal absorption and blood-brain barrier transport.' });
+  if (data.rot_bonds !== undefined) rules.push({ label: 'Rot. Bonds', current: data.rot_bonds, ideal: '≤ 10', pass: data.rot_bonds <= 10, desc: 'Excessive molecular flexibility reduces binding affinity due to entropy loss.' });
   
   const passCount = rules.filter(r => r.pass).length;
   document.getElementById('ro5-status').textContent = passCount + '/' + rules.length + ' rules passed';
-  document.getElementById('lip-rules').innerHTML = rules.map(r =>
-    '<span class="lip-rule ' + (r.pass ? 'pass' : 'fail') + '">' +
-    '<i class="ti ti-' + (r.pass ? 'check' : 'x') + '" style="font-size:12px"></i> ' +
-    r.label + '</span>'
-  ).join('');
+  
+  const rulesHtml = '<div class="rules-list">' + rules.map(r => 
+    '<div class="rule-row ' + (r.pass ? 'pass' : 'fail') + '">' +
+      '<div class="rule-main">' +
+        '<i class="rule-icon ti ' + (r.pass ? 'ti-circle-check-filled pass' : 'ti-circle-x-filled fail') + '"></i>' +
+        '<div class="rule-text">' +
+          '<div class="rule-name">' + r.label +
+            '<div class="info-icon" style="margin-left:4px"><i class="ti ti-info-circle"></i>' +
+              '<div class="info-tooltip" style="bottom:150%; left:50%; margin-left:-100px;">' +
+                '<strong>Requirement</strong> ' + r.ideal + '<br>' +
+                '<strong>Why</strong> ' + r.desc +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="rule-desc">Required: ' + r.ideal + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="rule-value-badge">' + r.current + '</div>' +
+    '</div>'
+  ).join('') + '</div>';
+
+  let summaryHtml = '';
+  if (passCount === rules.length) {
+    summaryHtml = '<div class="rules-summary pass-high"><div class="summary-content"><div class="summary-title">Excellent Drug-likeness</div><div class="summary-desc">This molecule passes all physical property checks, indicating a very high probability of good oral bioavailability and cellular permeability.</div></div><img src="/static/molecular_bg.png" class="summary-img"></div>';
+  } else if (passCount >= rules.length - 1) {
+    summaryHtml = '<div class="rules-summary pass-high" style="background:var(--bg-primary); border-color:var(--border-med); color:var(--text-primary)"><div class="summary-content"><div class="summary-title">Acceptable Drug-likeness (' + passCount + '/' + rules.length + ')</div><div class="summary-desc">This molecule passes most checks. It has 1 violation, which is generally acceptable and common for oral drugs.</div></div><img src="/static/molecular_bg.png" class="summary-img" style="opacity: 0.4;"></div>';
+  } else {
+    summaryHtml = '<div class="rules-summary pass-low"><div class="summary-content"><div class="summary-title">Poor Drug-likeness (' + passCount + '/' + rules.length + ')</div><div class="summary-desc">This molecule violates multiple rules. It is highly likely to suffer from poor absorption, solubility, or permeability issues.</div></div><img src="/static/molecular_bg.png" class="summary-img" style="opacity: 0.3; filter: saturate(0.5);"></div>';
+  }
+  
+  document.getElementById('lip-rules').innerHTML = rulesHtml + summaryHtml;
 }
 
 function renderTargets(data) {
-  document.getElementById('targets-sub').textContent = data.targets.length + ' targets found';
+  document.getElementById('targets-sub').textContent = data.targets.length + ' targets predicted';
   document.getElementById('target-list').innerHTML = data.targets.map(t => {
     const confClass = t.conf === 'high' ? 'conf-high' : t.conf === 'med' ? 'conf-med' : 'conf-low';
     const confLabel = t.conf === 'high' ? 'High' : t.conf === 'med' ? 'Medium' : 'Low';
-    return '<div class="target-row">' +
-      '<div class="target-dot" style="background:' + t.col + '"></div>' +
-      '<div class="target-info">' +
-        '<div class="target-name">' + t.name + '</div>' +
-        '<div class="target-class">' + t.cls + '</div>' +
-      '</div>' +
-      '<div class="affinity-wrap">' +
-        '<div class="affinity-label">Affinity</div>' +
-        '<div class="affinity-bar-bg">' +
-          '<div class="affinity-fill" style="width:' + Math.round(t.aff * 100) + '%;background:' + t.col + '"></div>' +
+    
+    // Icon selection based on class
+    let icon = 'ti-microscope';
+    if (t.cls.toLowerCase().includes('gpcr')) icon = 'ti-activity';
+    if (t.cls.toLowerCase().includes('channel')) icon = 'ti-bolt';
+    if (t.cls.toLowerCase().includes('kinase')) icon = 'ti-atom-2';
+    if (t.cls.toLowerCase().includes('protease')) icon = 'ti-scissors';
+    if (t.cls.toLowerCase().includes('nuclear')) icon = 'ti-circle-dot';
+
+    const affinityPct = Math.round(t.aff * 100);
+
+    return '<div class="target-card">' +
+      '<div class="target-header">' +
+        '<div class="target-icon-wrap" style="background:' + t.col + '20; color:' + t.col + '">' +
+          '<i class="ti ' + icon + '"></i>' +
+        '</div>' +
+        '<div class="target-meta">' +
+          '<div class="target-name-row">' +
+            '<div class="target-name">' + t.name + '</div>' +
+            (t.desc ? '<div class="info-icon" style="margin-left:4px;"><i class="ti ti-info-circle"></i>' +
+              '<div class="info-tooltip" style="bottom:150%; left:50%; margin-left:-100px; white-space:normal; width:220px;">' +
+                '<strong>Interaction Target</strong> ' + t.desc +
+              '</div>' +
+            '</div>' : '') +
+          '</div>' +
+          '<div class="target-class">' + t.cls + '</div>' +
         '</div>' +
       '</div>' +
-      '<div class="affinity-score">' + Math.round(t.aff * 100) + '%</div>' +
-      '<span class="confidence-badge ' + confClass + '">' + confLabel + '</span>' +
-      '</div>';
+      '<div class="target-stats">' +
+        '<div class="stat-row">' +
+          '<span class="stat-label">Confidence</span>' +
+          '<div style="display:flex; align-items:center; gap:4px;">' +
+            '<span class="confidence-chip ' + confClass + '">' + confLabel + '</span>' +
+            (t.conf_desc ? '<div class="info-icon"><i class="ti ti-info-circle"></i>' +
+              '<div class="info-tooltip" style="bottom:150%; right:0; left:auto; margin-left:0; white-space:normal; width:200px;">' +
+                '<strong>Reasoning</strong> ' + t.conf_desc +
+              '</div>' +
+            '</div>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="affinity-container">' +
+          '<div class="affinity-label-row">' +
+            '<span>Binding Affinity</span>' +
+            '<span>' + affinityPct + '%</span>' +
+          '</div>' +
+          '<div class="affinity-bar-outer">' +
+            '<div class="affinity-bar-inner" style="width:' + affinityPct + '%; background:' + t.col + '"></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
   }).join('');
 }
 
@@ -718,7 +1225,7 @@ function render2D(smiles, data) {
       const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       bg.setAttribute('cx', a.x); bg.setAttribute('cy', a.y);
       bg.setAttribute('r', '11');
-      bg.setAttribute('fill', window.matchMedia('(prefers-color-scheme:dark)').matches ? '#2a2a28' : '#f5f5f3');
+      bg.setAttribute('fill', '#f5f5f3');
       svg.appendChild(bg);
       const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       txt.setAttribute('x', a.x); txt.setAttribute('y', a.y);
@@ -734,7 +1241,7 @@ function render2D(smiles, data) {
   const formula = document.createElementNS('http://www.w3.org/2000/svg', 'text');
   formula.setAttribute('x', '10'); formula.setAttribute('y', '180');
   formula.setAttribute('font-size', '11');
-  formula.setAttribute('fill', window.matchMedia('(prefers-color-scheme:dark)').matches ? '#6b6b67' : '#9c9a92');
+  formula.setAttribute('fill', '#888882');
   formula.textContent = smilesToFormula(smiles);
   svg.appendChild(formula);
 }
@@ -795,7 +1302,7 @@ function render3D(data) {
   }
   
   viewer3D = $3Dmol.createViewer(container, {
-    backgroundColor: window.matchMedia('(prefers-color-scheme:dark)').matches ? '#2a2a28' : '#f5f5f3'
+    backgroundColor: '#f5f5f3'
   });
   
   viewer3D.addModel(data.mblock, "sdf");

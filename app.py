@@ -30,31 +30,71 @@ def get_compound_name(smiles, mol):
         return "Custom Compound"
 
 def detect_interactions(mol):
-    # Mapping the previous detect_interactions to the new target format
+    # Mapping the previous detect_interactions to the new target format with detailed descriptions
     targets = []
     
     # Check for Oxygen (8) or Nitrogen (7) atoms
     has_h_bond_acceptor_donor = any(atom.GetAtomicNum() in (7, 8) for atom in mol.GetAtoms())
     if has_h_bond_acceptor_donor:
-        targets.append({ "name": "H-Bond Dependent Targets", "cls": "Kinases / Receptors", "aff": 0.65, "conf": "med", "col": "#378ADD" })
+        targets.append({
+            "name": "H-Bond Dependent Targets",
+            "cls": "Kinases / Receptors",
+            "aff": 0.65,
+            "conf": "med",
+            "col": "#378ADD",
+            "desc": "Targets containing polar amino acid residues (like Ser, Thr, Asn) in their active sites that strongly coordinate with the molecule's Nitrogen or Oxygen atoms via hydrogen bonds.",
+            "conf_desc": "Presence of generic H-bond donors/acceptors indicates binding potential, but exact 3D spatial alignment determines true selectivity."
+        })
         
     # Check for Carbon chains or non-polar groups
     has_c = sum(1 for atom in mol.GetAtoms() if atom.GetAtomicNum() == 6)
     if has_c >= 4:
-        targets.append({ "name": "Lipophilic Pockets", "cls": "GPCR", "aff": 0.55, "conf": "med", "col": "#1D9E75" })
+        targets.append({
+            "name": "Lipophilic Pockets",
+            "cls": "GPCR",
+            "aff": 0.55,
+            "conf": "med",
+            "col": "#1D9E75",
+            "desc": "Deep hydrophobic cavities typically found in G-protein coupled receptors (GPCRs) that accommodate the carbon framework via favorable van der Waals interactions.",
+            "conf_desc": "Sufficient carbon skeleton size confirms fit into lipophilic regions, though flexible chains may lead to multi-target promiscuity."
+        })
         
     # Check for halogens for halogen bonding
     has_halogen = any(atom.GetAtomicNum() in (9, 17, 35, 53) for atom in mol.GetAtoms())
     if has_halogen:
-        targets.append({ "name": "Halogen-binding Sites", "cls": "Enzyme", "aff": 0.75, "conf": "high", "col": "#D85A30" })
+        targets.append({
+            "name": "Halogen-binding Sites",
+            "cls": "Enzyme",
+            "aff": 0.75,
+            "conf": "high",
+            "col": "#D85A30",
+            "desc": "Specific enzymatic pockets where highly directional halogen bonds interact strongly with Lewis bases (e.g., protein backbone carbonyl oxygens).",
+            "conf_desc": "Halogens form exceptionally specific and highly directional interactions, strongly anchoring the drug to target enzyme active sites."
+        })
         
     # Check for aromatic rings for Pi-Pi stacking
     has_aromatic = any(atom.GetIsAromatic() for atom in mol.GetAtoms())
     if has_aromatic:
-        targets.append({ "name": "Aromatic Stacking Targets", "cls": "Transcription Factor", "aff": 0.45, "conf": "low", "col": "#7F77DD" })
+        targets.append({
+            "name": "Aromatic Stacking Targets",
+            "cls": "Transcription Factor",
+            "aff": 0.45,
+            "conf": "low",
+            "col": "#7F77DD",
+            "desc": "Planar binding interfaces facilitating parallel or T-shaped π-π stacking interactions with aromatic protein residues (Phe, Tyr, Trp).",
+            "conf_desc": "Aromatic rings are extremely common structural motifs; true binding requires specific flanking residues to prevent steric clashes."
+        })
         
     if not targets:
-        targets.append({ "name": "Low Specificity", "cls": "Various", "aff": 0.20, "conf": "low", "col": "#9c9a92" })
+        targets.append({
+            "name": "Low Specificity",
+            "cls": "Various",
+            "aff": 0.20,
+            "conf": "low",
+            "col": "#9c9a92",
+            "desc": "Lacks highly distinct functional binding handles, leading to transient or non-specific surface interactions.",
+            "conf_desc": "Absence of strong electrostatic anchors or defined lipophilic cores reduces selective binding probability."
+        })
 
     return targets
 
