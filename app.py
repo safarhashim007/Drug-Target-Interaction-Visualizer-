@@ -2,6 +2,10 @@ import os
 import urllib.request
 import urllib.parse
 import json
+import ssl
+
+# Create an unverified SSL context to bypass corporate proxy/SSL errors
+ctx = ssl._create_unverified_context()
 
 from flask import Flask, request, jsonify, render_template
 from rdkit import Chem  # type: ignore
@@ -17,7 +21,7 @@ def get_compound_name(smiles, mol):
     try:
         url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/{urllib.parse.quote(smiles)}/property/Title/JSON"
         req = urllib.request.Request(url)
-        with urllib.request.urlopen(req, timeout=2) as response:
+        with urllib.request.urlopen(req, timeout=2, context=ctx) as response:
             data = json.loads(response.read().decode())
             return data['PropertyTable']['Properties'][0]['Title']
     except Exception:
@@ -122,6 +126,102 @@ def get_3d_mblock(mol):
 def index():
     return render_template('index.html')
 
+@app.route('/api/compound')
+def get_compound():
+    """Proxy PubChem compound lookup by name or SMILES — avoids browser CORS issues."""
+    query = request.args.get('query', '').strip()
+    
+    if not query:
+        return jsonify({'error': 'No query provided'}), 400
+
+    try:
+        encoded = urllib.parse.quote(query)
+        
+        # Heuristic: if it contains typical SMILES structural characters, try 'smiles' first.
+        # Otherwise, try 'name' first.
+        if any(c in "=#[]()@" for c in query):
+            namespaces = ["smiles", "name"]
+        else:
+            namespaces = ["name", "smiles"]
+            
+        data = None
+        used_namespace = ""
+        
+        for ns in namespaces:
+            props_url = (
+                f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/{ns}/{encoded}"
+                f"/property/Title,CanonicalSMILES,IsomericSMILES,MolecularWeight,XLogP,TPSA,"
+                f"HBondDonorCount,HBondAcceptorCount,RotatableBondCount/JSON"
+            )
+            req = urllib.request.Request(props_url, headers={'User-Agent': 'DrugTargetVisualizer/2.0'})
+            try:
+                with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
+                    data = json.loads(resp.read().decode())
+                    used_namespace = ns
+                    break
+            except urllib.error.HTTPError as e:
+                if e.code == 404:
+                    continue # Try the next namespace
+                raise # Propagate other errors (like 502, 500)
+                
+        if not data:
+            return jsonify({'error': f'Compound "{query}" not found in PubChem'}), 404
+
+        props = data['PropertyTable']['Properties'][0]
+        smiles = props.get('CanonicalSMILES') or props.get('IsomericSMILES') or props.get('ConnectivitySMILES') or ''
+        
+        if not smiles and used_namespace == "smiles":
+            smiles = query # Fallback if PubChem didn't return one explicitly
+            
+        if not smiles:
+            return jsonify({'error': f'No SMILES found for "{query}"'}), 404
+
+        # Also fetch CID using the successful namespace
+        cid_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/{used_namespace}/{encoded}/cids/JSON"
+        req2 = urllib.request.Request(cid_url, headers={'User-Agent': 'DrugTargetVisualizer/2.0'})
+        cid = None
+        try:
+            with urllib.request.urlopen(req2, timeout=10, context=ctx) as resp2:
+                cid_data = json.loads(resp2.read().decode())
+                cid = cid_data['IdentifierList']['CID'][0]
+        except Exception:
+            pass
+
+        return jsonify({
+            'name': props.get('Title', query),
+            'smiles': smiles,
+            'cid': cid,
+            'mw': props.get('MolecularWeight'),
+            'logp': props.get('XLogP'),
+            'tpsa': props.get('TPSA'),
+            'hbd': props.get('HBondDonorCount'),
+            'hba': props.get('HBondAcceptorCount'),
+            'rot': props.get('RotatableBondCount'),
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'PubChem lookup failed: {str(e)}'}), 502
+
+
+@app.route('/api/sdf')
+def get_sdf():
+    """Proxy PubChem 3D SDF fetch by CID — avoids browser CORS issues."""
+    cid = request.args.get('cid', '').strip()
+    if not cid:
+        return jsonify({'error': 'No CID provided'}), 400
+    try:
+        url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/record/SDF/?record_type=3d"
+        req = urllib.request.Request(url, headers={'User-Agent': 'DrugTargetVisualizer/2.0'})
+        with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
+            sdf_text = resp.read().decode()
+        from flask import Response
+        return Response(sdf_text, mimetype='text/plain')
+    except urllib.error.HTTPError as e:
+        return jsonify({'error': f'3D SDF not available (HTTP {e.code})'}), 404
+    except Exception as e:
+        return jsonify({'error': f'SDF fetch failed: {str(e)}'}), 502
+
+
 @app.route('/api/analyze', methods=['POST'])
 def analyze():
     data = request.get_json()
@@ -167,4 +267,4 @@ def analyze():
     return jsonify(result)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)

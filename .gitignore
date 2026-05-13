@@ -17,3 +17,4 @@ __pycache__/
 # IDEs
 .vscode/
 .idea/
+flask_log.txt
