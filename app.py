@@ -12,8 +12,9 @@ from rdkit import Chem  # type: ignore
 from rdkit.Chem import Descriptors  # type: ignore
 from rdkit.Chem import AllChem  # type: ignore
 from rdkit.Chem import QED  # type: ignore
+from rdkit.Chem.rdMolDescriptors import CalcMolFormula, CalcNumRings, CalcNumAromaticRings, CalcFractionCSP3  # type: ignore
+from rdkit.Chem.GraphDescriptors import BertzCT  # type: ignore
 from rdkit.Chem.Draw import rdMolDraw2D  # type: ignore
-from rdkit.Chem.rdMolDescriptors import CalcMolFormula, CalcNumRings  # type: ignore
 
 app = Flask(__name__)
 
@@ -242,6 +243,9 @@ def analyze():
         rot_bonds = Descriptors.NumRotatableBonds(mol)
         qed = round(QED.qed(mol), 3)
         rings = CalcNumRings(mol)
+        aromatic_rings = CalcNumAromaticRings(mol)
+        fsp3 = round(CalcFractionCSP3(mol), 3)
+        complexity = round(BertzCT(mol), 1)
     except Exception as e:
         return jsonify({'error': f'Error calculating properties: {str(e)}'}), 500
     
@@ -260,6 +264,9 @@ def analyze():
         'rot_bonds': rot_bonds,
         'qed': qed,
         'rings': rings,
+        'aromatic_rings': aromatic_rings,
+        'fsp3': fsp3,
+        'complexity': complexity,
         'targets': targets,
         'svg2d': svg2d,
         'mblock': mblock
